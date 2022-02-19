@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NEST" Version="7.6.2" />
+    <PackageReference Include="Elasticsearch.Net" Version="7.6.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Classifieds.Shared\Models\ProfilePermissions.cs;..\Classifieds.Shared\Models\Profile.cs;..\Classifieds.Shared\Models\PhoneNumber.cs;..\Classifieds.Shared\Models\Location.cs;..\Classifieds.Shared\Models\Address.cs;..\Classifieds.Shared\Models\ProfileImage.cs;..\Classifieds.Shared\Enums\ProfileStatuses.cs;..\Classifieds.Shared\Enums\ProfileTypes.cs;..\Classifieds.Shared\Enums\ProfileSubtypes.cs;..\Classifieds.Shared\Enums\AdTypes.cs;..\Classifieds.Shared\Enums\LocationTypes.cs;..\Classifieds.Shared\Enums\PhoneNumberTypes.cs;">
+        <Link>_Inlined\%(RecursiveDir)\%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,137 @@
+----------------------------------------------------------------------------------
+Microservices
+----------------------------------------------------------------------------------
+
+This section is meant to serve as a high level overview of the available microservices.
+The document will contain useful meta data related to the microservice including
+important dependencies, responsibilities, endpoints, notes, etc.
+
+1.) AdsAPI
+
+	App Name: ads_api
+	SSL: Yes
+	Logging: Serilog / ELK
+	Responsibility: Manage classified ads.
+	
+	NOTE: When admin functionality is necessary decision will need to be made
+	whether those types of actions are most appropriate being added to this
+	service or within a separate service. For now the ads api is meant to
+	host public facing, client font-end responsibilities.
+	
+	Endpoints:
+	
+	GET /ads?searchString=foo&page=1&location=long,lat - Search ads
+	GET /ads/{id} - Get single ad.
+	POST /ads - Create new ad (authentication required)
+	
+	Dependencies
+	
+	- Database
+		- MongoDB - source of truth for ads.
+		- Elastic - search ads including advanced geo location support.
+		- RabbitMq (MassTransit)
+			Events:
+				- Published event with ad.
+				
+	- Services
+		- Auth Server
+
+2.) CitiesAPI
+
+	App Name: cities_api
+	SSL: Yes
+	Auth Required: No
+	Logging Serilog / ELK
+	Responsibility: Search for matching cities.
+	
+	Endpoints:
+	
+	- Get /cities?searchString=foo Get matching cities.
+	
+	Dependencies:
+	
+	- Database
+		- Elastic - Source of truth for city info and logs.
+		
+	NOTE: The source of truth for this data is an external file. The data
+	is provided as readonly via the api. Therefore, I didn't think it was necessary
+	to duplicate the info both in mongo and elastic since the primary function
+	is to search for a matching city which elastic is more equipped to handle than mongo.
+	
+3.) LogAPI
+
+	SSL: Yes
+	Auth Required: No
+	Responsibility: ELK stack Visibility of front-end / client derived errors, exceptions, etc.
+	
+	NOTE: This API has not been implemented yet. Need to flush out implementation based on
+	what is derived on the front-end and would be necessary to ad to the logs.
+	
+	This could probably also be extracted out of the current repo and moved to its own
+	dedicated repo since it is a generic utility unassociated to the classifieds domain model.
+	
+	Dependencies:
+	
+		- Database
+			- Elastic - Log storage
+
+4.) MediaAPI
+
+	App Name: media_api
+	SSL: Yes
+	Auth Required: Partial
+	Logging: Serilog / ELK
+	Responsibility: Manage media files such as; images, video, document, etc.
+	
+	As supported media types increase this service *could be divided into multiple
+	services based on media type being managed. For now though one single service
+	to manage all media seems sufficient.
+	
+	The current service is not horizontally scalable since files are written
+	directly to the machine instance. File writes will either need to be done on volume
+	that can be mounted across all instances or use could storage like s3.
+	
+	This service has been designed to only be used by authenticated users with media_api claim.
+	
+	Endpoints:
+	
+	- GET /files/{id} - Get file MongoDB document.
+	- POST /files - Create / Upload new file. (authentication required)
+	
+	Dependencies:
+	
+	- Database
+		- MongoDB - Source of truth for file information like location of files on disk and ownership.
+		- Elastic - Log storage
+		
+	- Services
+		- Auth Server
+		
+5.) Chat
+
+	App Name: chat
+	SSL: Yes
+	Auth Required: Yes
+	Logging: Serilog / ELK
+	Responsibility: Provide realtime user to user communication using SignalR.
+	
+	NOTE: This service provides a hub not an api. If necessary an API for conversations
+	will be provided by a separate service.
+	
+	Hubs:
+		ChatHub
+		
+	Dependencies:
+		
+		- Database
+			- MongoDB - source of truth for conversations between users.
+			- Elastic - Log storage
+			- RabbitMq (MassTransit) - backplane
+			
+			NOTE: The backplane provides horizontal scaling capabilities for
+			this service. The concept of a backplane within the context of 
+			web sockets / signalR is a well known design pattern to tacke
+			this type of responsibility.
+		
+		- Services:
+			- Auth Server

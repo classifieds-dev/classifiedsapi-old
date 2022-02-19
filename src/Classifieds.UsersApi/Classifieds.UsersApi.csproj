@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>2b579b32-5b37-44e1-a48f-8876e2a5f8bb</UserSecretsId>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <!-- <RuntimeIdentifier>osx.10.13-x64</RuntimeIdentifier> -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- <PublishSingleFile>true</PublishSingleFile> -->
+    <AWSProjectType>Lambda</AWSProjectType>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="bootstrap" ExcludeFromSingleFile="">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="5.0.0" />
+    <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="3.3.109.15" />
+    <PackageReference Include="Amazon.Lambda.RuntimeSupport" Version="1.1.1" />
+    <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Classifieds.Shared\Models\PublicUserProfile.cs;">
+        <Link>_Inlined\Classifieds.Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+</Project>

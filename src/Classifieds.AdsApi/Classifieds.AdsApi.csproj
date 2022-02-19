@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>2f057031-86d1-4363-8edf-f42fb5b19ed1</UserSecretsId>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <!-- <RuntimeIdentifier>osx.10.13-x64</RuntimeIdentifier> -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- <PublishSingleFile>true</PublishSingleFile> -->
+    <AWSProjectType>Lambda</AWSProjectType>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <!--AWS Lambda executes the bootstrap shell script as the startup process for your function.-->
+    <Content Include="bootstrap" ExcludeFromSingleFile="">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Classifieds.Shared\Enums\AttributeTypes.cs;..\Classifieds.Shared\Enums\AdTypes.cs;..\Classifieds.Shared\Enums\AdStatuses.cs;..\Classifieds.Shared\Helpers\AdIndexerHelper.cs;..\Classifieds.Shared\Models\AttributeValue.cs;..\Classifieds.Shared\Models\AttributeIndex.cs;..\Classifieds.Shared\Models\AdTypeAttribute.cs;..\Classifieds.Shared\Models\AdType.cs;..\Classifieds.Shared\Models\AdIndex.cs;..\Classifieds.Shared\Models\AdImageIndex.cs;..\Classifieds.Shared\Models\AdImage.cs;..\Classifieds.Shared\Models\AdFeatureIndex.cs;..\Classifieds.Shared\Models\AdFeature.cs;..\Classifieds.Shared\Models\Ad.cs;..\Classifieds.Shared\Models\Vocabulary.cs;..\Classifieds.Shared\Models\Term.cs;">
+        <Link>_Inlined\Classifieds.Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+    <Folder Include="Attributes\" />
+    <Folder Include="ActionConstraints\" />
+    <Folder Include="Validators\" />
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="5.1.1" />
+    <PackageReference Include="Amazon.Lambda.RuntimeSupport" Version="1.1.1" />
+    <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.7.0" />
+    <PackageReference Include="Elasticsearch.Net" Version="7.6.2" />
+    <PackageReference Include="NEST" Version="7.6.2" />
+    <PackageReference Include="FluentValidation" Version="8.6.2" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.2" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.110.67" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.5.1" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,889 @@
+This project can best be described as an in-depth case study using
+.NET Core microservices to create a classified ads system.
+
+------------------------------------------------------------------------
+Technology Overview
+------------------------------------------------------------------------
+.NET Core 3
+Docker - containerization
+Swagger - Service documentation
+MassTransit - Powerful .NET Core Message broker abstraction layer
+MongoDB - Act as source for truth for most data in system.
+Elastic - Replication of source data for search capabilities.
+RabbitMQ - message broker
+IdentityServer4 - oauth2 authentication
+* Ocelot - API Gateway
+* Redis caching
+* Botsharp || Articulate - seems very well done and robust
+
+------------------------------------------------------------------------
+Planned
+------------------------------------------------------------------------
+
+Implement Ocelot API Gateway
+- basic setup and configuration (complete)
+- auth and authorization using identity server
+- caching using redis - where is makes sense to implement caching and where it doesn't.
+- integrate logging - research compatibility with serilog
+- tracing / butterfly - need to update for es7 compatible (supports 5 - errors).
+- quality of service integration using poly
+- headers and claims transformations - research / audit
+- aggregation if necessary (I don't think this is needed right now).
+
+
+Gateway architecture
+
+- FE.Classifieds (generic)
+-- ads
+-- taxonomy
+-- cities
+
+FE.{{ad_domain}}
+-- ... fe services specific to business domain ie. real estate, rentals, autos/transit, etc.
+
+Backend - separate back-end for everything? - I think this makes sense. I don't
+think we need to subdivide the services for the back-end since the administrative features
+will not be separate apis. They will probably just be different end-points on the existing
+api projects with polocies using roles (ideally) to protect them.
+
+-----------------------------------------
+
+CAAP (conversation as a platform) - evaluate options
+Continue working on / flushing out feature sets and taxonomy api.
+Build marketing profiles api and integrate into 
+Front-end error and exception handling
+front-end logging
+ui unit tests
+ui cyprus system tests
+api unit and integration tests
+
+
+-------------------------------------------------------------------------
+AI / chat UI - Conversation as a platform (CaaP)
+-------------------------------------------------------------------------
+
+I think it would be neat and creative, different to provide a search that
+works like a chat. For example, the chat could work something ike this.
+
+C: Hello, what type of ad are looking for today?
+U: 1.) I am looking for a [tv] - tv identified does not map to type default to genric ad search
+   2.) I am looking for a [apartment] -- apartment identified and maps to type - rentals search
+   
+C: What location are you searching?
+   1.) city name -- matches city name
+   
+c: Would you like to add a search radius?
+	1.) Y
+	  A. What is your search radius for the specified location?
+	  A: 10 miles - match distance and units
+	2.) N
+	
+- BotSharp
+- Articulate UI
+- Botpress
+- Rasa UI
+
+
+--------------------
+
+create ad intent
+	
+	
+Architecture
+-----------------
+
+Intent - Find Ad - Create {type} of ad
+Intent - Create Ad
+Intent - Login
+Intent - Create Vocabulary
+Intent - Create Profile (company, agent, dealership, etc.)
+	
+
+
+------------------------------------------------------------------------
+Business Overview
+------------------------------------------------------------------------
+
+The foundation of this project is built on a generic ad. A generic ad will
+be the parent for all other ad types. The base ad will have
+the following features.
+
+1.) Title
+2.) Description
+3.) Location (city / lat and long)
+4.) Media (images)
+5. Feature Sets (Vocabulary abstraction)
+
+The above attributes form the foundation of an ad. Other ad types will be introduced
+that extend and ad their own domain driven properties on a case by case basis. Three
+rules will govern introduction of new ad types.
+
+1.) New types will be opinionated regarding the properties applicable to their domain.
+2.) New types will be created in isolation of others and ideally the base type.
+3.) Logic will be shared as it makes sense to do so but in violation of overal, microservice system architecture.
+
+----------------------------------------
+Feature Sets Explaination and Plan
+
+Feature sets are one or more embedded vocabularies meant to support boolean
+type features of the ad. A primary example are rental amenities. The top
+level vocabulary would be amenities. Vocabularies are a hierarchical tree of
+terms. Terms represent the items in a vocabulary. A simple example for amenities
+would be pool, or fitness area. In addition terms can be groups. Groups provide a way
+to categorize sets of terms under the same vocabulary. Given the previous example
+a group that could be used for pool would be out door and fitness indoor or perhaps
+dishwasher under a group of kitchen.
+
+Features can be directly matched in searches. For example, a checkbox can be provided
+for users to find all rentals with a dishwasher by matching all ads that contain a dishwasher
+feature. This is a more concrete search than simply searching the entire ad details for features.
+
+We could also implement a feature discovery mechanism using ML to extract features from an ad description.
+
+The initial implementation of this is going to be based on having a dedicated, read only vocabularies
+allowing users to check or uncheck a known set of features. Future implementations will include being
+able to create ones own vocabulary and add features to ads when creating an ad that are not part of 
+target or selected vocabulary.
+
+FEATURE HOSITING - features can be hoisted to the top of ads and aggregated together without
+groups to market specific, business centric, important features on the first page / tab of the ad.
+Feature hoisting will not remove the feature from the default feature set tab which it resides.
+
+UI: My initial thought is that each feature set will be separate tab on the ad. Perhaps this
+functionality could be configured at runtime. Either a separate tab or perhaps in a nicely laid
+out table below the description or something.
+
+-----------------------------------------------------------------------
+Planned Ad Domains
+-----------------------------------------------------------------------
+
+Generic Ad
+- General (no charge)
+- Rental Ad (Ex. Rentals.AdsApi)
+- Auto Ad (Ex. Autos.Ad Autos.AdsAPi)
+- RealEstate Ad (Ex. RealEstate.AdsApi)
+- Job / Service Ad (Ex. Jobs.AdsApi)
+
+Extensions:
+- Auctions ?
+- Purchasing ?
+- Contact / Email functionality
+- Favorite / save for later feature
+- Rating feature - for profiles
+- Review feature for profiles
+- standardize pricing features
+
+-----------------------------------------------------------------------
+UI Design
+-----------------------------------------------------------------------
+
+home  |  general  |  real estate  |   rentals  |   jobs
+
+Account
+--------------
+My Ads
+My Profiles
+Conversations
+
+-----------------------------------------------------------------------
+Marketing
+-----------------------------------------------------------------------
+
++ charge for marketing profiles
+
+Individual users typical post generic ads. Those ads that are real estate
+, rentals, autos, and jobs will have a company or individual like a 
+real estate agent associated with them. Therefore, I think it makes
+sense to try and abstract that concept so it can easily be reused with
+common attributes that would make up a marketing profile. Real estate
+also has two dimensions. In real estate there would typically be a company
+and agent or broker. So that relationshop needs to be taken into account as well.
+
+I think a good term for this is a profile The module can be named marketing, The purpose
+of these are to be associated with ads and provide marketing visibility. So Marketing.ProfilesApi
+seems to make sense.
+
+Users will be associated with profiles. Ads can be associated with none, one, or many marketing profiles.
+
+Marketing.ProfilesApi
+------------------------------------
+GET /profiles/{id} - Get a profile by id.
+POST /profiles - Create profile
+PUT /profiles - Update profile - requires write permission
+
+* restrict number of profiles normal user can create. Prevent flood?
+
+Profiles should also have the ability to add links with contextual info. For example
+a link to youtube video or company website maybe.
+
+Profile
+- name (company name or person name)
+- logo (company logo or person image)
+- phone Array ? probably just embded
+- email - if they want to provide on site?
+
+Should profiles be allowed to have physical locations? This would make it possible
+to have a company and list the locations below, hours, etc. like a dealership or
+find closest dealership. Would this be better as a separate API?
+
+- can profile have attributes - yes? - based on type? perhaps
+
+Profile
+- id
+- parentId: '' -- 
+- level | depth = = root
+- Title
+- status
+- type [agent|broker|ndividual|company|organization]
+- adSpace AdTypes??? -- provides context for organization or individual??? - or just have them supply it?
+- firstName
+- middleName
+- lastName
+- preferedName
+- companyName
+- indroduction
+- Media - type flag ---- logo|
+- Contact type=[phone|email|fax] value="" label=[cell|home]???
+- Profiles[]
+- Locations[]
+- Locations
+	- title 
+	- type [home|office|etc]
+	- address
+	-- city
+	-- state
+	-- zip
+	-- etc.
+	- Contact type=[phone|email|fax] value="" label=[mobile|home]???
+	
+when an ad is created it can belong to a company or individual
+users are given right to manage entities for ads associated with profiles they belong to.
+
+Where does the relationshop between profiles and ads belong?
+
+These can probably be cached.
+
+compatibility questions????
+
+Profile (Office)
+- Profile
+
+-----------------
+- tour scheduling
+-----------------
+
+-----------------------------------------------------------------------
+Taxonomy (reuseable categorized groups of data) likely added to search indexing
+-----------------------------------------------------------------------
+
+I have always thought drupal has the best terminology in this space so lets
+models it of of that.
+
+Classifieds.TaxonomyApi
+-----------------------------
+- vocabulary
+- term (hierarchical) - determine best strategy to store data.
+-----------------------------
+
+VocabulariesController {
+}
+I think we just need this.
+
+GET /vocabularies/{id}/terms - Get full term tree - I think this is fine
+GET /vocabularies/{id}/terms/{id} - Get terms below specified term in vocabulary.
+
+both of these should probably support searching to return a subset - flat?
+
+- group - a term can act as a group. When a term is a group it will logically group
+together all the terms below it visually in the ui.
+
+These can be cached as well. Will need to look into caching strategy.
+
+I don't really need a ui for this. I can prombly create a console app
+that will generate the vocabularies from a csv or something.
+
+-----------------------------
+- requests to alter / add can be made?
+- users can ad their own custom ones to ads.
+
+-----------------------------
+
+- Add new terms to feature set when creating ad
+- Move terms around using grag and drop behavior.
+- Move parent "sections" around in layout / weight. - vocabs can have weight this means for page arrangement.
+- Create feature set / vocabulary libraries
+- Create vocabulary viewer to create new vocabs and populate new terms. Should be useable within ad and outside.
+- implement hoisting
+- add validation for vocabs and terms
+- integrate feature sets into elastic search to be searched against.
+  - I think it will be best to store this as flat data array. - store leafs
+    terms: ['one','two','three']
+    1.) - terms matching this arry
+    2.) Store leafs as flat nested object array,
+    3.) join (parent - child) (DECISION)
+    -- this would also make it easy to match terms for auto complete
+       via aggregation and number of matches.
+       classified_ad_terms
+       - Array<AdTermIndex> --- 
+       
+       
+Vocabularies are meant to be freeform. Attributes that are not known or can
+be added my a user during the creation of an ad. Vocabularies are meant to serve the purpose
+of allowing a user to create reusable set of terms to easily apply to new ads without
+needing to renter each and every term per a new ad.
+
+What vocabs are not for is modeling known data sets. Although they could be this
+is not an abuse of power and flexibility offered. Known data sets should be modeled
+into the application. For example, vehicles makes and models *could be each a vocabulary.
+However, these are known data type and set. Therefore, it would be better to model
+them into the application as a microservice much like locations are.
+
+-----------------------------------------------------------------------
+Auctions
+-----------------------------------------------------------------------
+
+This will require implementing a saga in mass transit.
+- I don't believe a routing slip is necessary since the states won't be dyynamic. At least not that I can think
+of at this time.
+
+ie. state machine for auction ad transitions.
+
+- Generic ad states? - is this worth generisizing czn it be?
+
+If we do generisize it does that mean we need to consider a routing slip because
+it will probably require dynamic state steps?
+
+-----------------------------------------------------------------------
+Hierarchical Ads / Tree
+-----------------------------------------------------------------------
+
+I think these will be stored in es in a nested document array ie.
+
+configurableOptions: [
+	{ option: humanName: maxchineName; id (original id) } - options must be created ahead of time in option set unlike vocabulary
+]
+
+I can't really see more than two levels here. So I think a simple parentId
+would work well.
+
+
+This can also lead way to configurable ads.
+
+ads
+- options[] (term) - children are "values" - Array<Term>
+
+- configuration ?
+
+- allow user to assign terms to ad === options: Array<Term> = []
+- child ads will allow selection of value for each option associated.
+
+
+ex. vocab -- color_options
+               -- term = white
+               -- term = blue
+               -- term = red
+               
+             size_options
+               -- term = s
+               -- term = xm
+               -- term = large
+               
+ad child:   color = white | size = s
+
+ad child --- display each option as select - stores value (term)
+
+Match child to configuration of parent.
+
+-----------------------
+
+parent
+
++ Option
+
+--------------
+autocomplete - select
+--------------
+
+----------------------
+child
+
+- option drop down
+- option drop down
+- option drop down
+
+----------------------
+
+-- options indexing a searching -- contextrual awareness of options based on category maybe?
+
+-- add categories.?
+-- faceted searching from options?
+
+------------------------------------------------------------------
+Image galleries
+------------------------------------------------------------------
+
+Instead of images the field will be galleries. Galleries
+will be stored as part of the ad.
+
+galleries: Array<Gallery>
+
+Gallery {
+	media: Array<Media>
+}
+
+* Currently only a single gallery is supported. It would be nice
+to allow multiple galleries. Multiple galleries would provide
+opportunities to place each gallery on a separate time. For example,
+apartments could have a default picture gallery and floorplans gallary.
+
+Configurable option ads become a little more complicated.
+
+- select (color: red) --- shows red images
+  select (size: xl) show xl red if available?
+  xxx ... so an so forth - best match available when it comes to nested documents.
+  
+-----------------------------------------------------------------------
+Videos
+-----------------------------------------------------------------------
+
+Video Tour - apartments ans rentals.
+
+-----------------------------------------------------------------------
+Concrete and abstract domain models
+-----------------------------------------------------------------------
+
+Some ad types will require concrete domain models that will be made up
+of their own micro services. Other ads might only require adding
+some fairly basic fielded data. Also, some ad domains might start
+out simple and become more complex requiring a more complex, separate
+microservice architecture for that domain.
+
+One solution is to build out a completely separate ad domain. The ad domain
+would have its own dedicated micro services and storage. A domain that fits this
+model would be vehicles.
+
+- Would domain be a good term to use for differentiating ad types?
+
+-----------------------------------------------------------------------
+Rentals
+-----------------------------------------------------------------------
+
+RentalAdsController
+GET /ad
+
+* title
++ address
++ prices w/ extra meta data or hierarchical ad relationships?
+  - models / units
+- floor plans (images) - categorization
+- amenities
+  - amenity categorization
+- features
+
+management company
+- complex / building
+-- agents /contacts
+
+(2 levels)
+- management company
+-- agents
+
+------------------------------------------------------------------------
+Autos
+------------------------------------------------------------------------
+
+AutoAd -- fielded data for the namespace - could be handled by taxonomy indirectly
+--------------
+make
+model
+year
+-------------
+
+specifications
+features
+- taxonomy
+  - exterior
+  - interior
+  - safety
+  - mechanical
+  - etc.
+
+mileage
+trim
+drive type
+style
+condition
+
+- dealers (company)
+
+storage:
+
+Will these be stored as separate docs or part of an ad (nested)?
+Will these be separate micro services that extend ad? ie.   Autos.AdsApi
+- I kind of like the idea of using separate services.
+- an Auto Ad extends an ad. That way it can be treated as an ad and add additional
+features on top of it?
+In es do we store as nested document or use parent and child relationships?
+
+------------------------------------------------------------------------
+Jobs
+------------------------------------------------------------------------
+
+business / company
+
+------------------------------------------------------------------------
+Ad Types
+------------------------------------------------------------------------
+
++ Add ad type on first ad create form.
+- rental
+- auto
+- real estate
+- job
+
+Screw bundle just call it type - makes more sense.
+Types are high level, hard coded categorizations of ads.
++ Charge for specific ad type? - ike real-estate charge for it?
+
+Different fields ie. beds, baths, make, model, etc.
+- changes data entry forms
+Different filtering criteria
+Possible different list item view
+Possible different detail view including different tabs and layout/content.
+
+Use angular6json forms to build different ad and filter forms based on ad type:
+entity = ad
+bundle = ad | real estate | rental | auto | job
+
+Each of these ad types will have diffent forms but will only require different
+configuration since the form itself will be dynamicaly generated via json schema.
+
+user will need to select type of ad to create or type will need to be inferred from page. For example,
+if user is inside the "rentals" section than when creating an ad the ad would be of type "rental".
+
+GET /ads/types   - get all ad types - ie. { machineName: "rental", humanName: "rental" 
+	form: ? - contains definition for the form? - I think that would work - right?
+	filter ? - contains definitimon for filter?
+}
+
+- does types even need to stored on back-end?
+----
+-could just be a static list of types available. I don't think this even necessarily
+needs to be dynamic since the types will be known. We don't need to build dynamic types at the moment.
+
+considerations:
+- support for stepper inside form
+- support for image upload
+- support for vocabulary selection
+- support for city selection
+
+https://github.com/hamzahamidi/ajsf
+
+How do I solve my back-end problems?
+
+Is it better to have a micro-service for each ad type of extend the current ad microserfce to enforce
+data entry for multiple ad types and searches?
+
+- ad create and edit would need to enforce schema and validation for each ad type.
+- ad search would need to support filtering criteria for each ad type.
+- ad get would need to send back the proper type if using ub classes of ad?
+
+
+------------------------------------------------------------------------
+Admin
+------------------------------------------------------------------------
+
+We need a way to manage all these entities without duplicating the same crud code
+everywhere. I think this is where building some type of generic system makes sense.
+Using ngrx and entity we could actually dynamically define entities and their properties.
+From there we could than dynamic build forms from json to manage the entities and override
+functionaility where necessary.
+
+one "entity" would be an entity itself.
+
+--------------------------------------------
+Ad Attributes
+-------------------------------------------
+
+Display locations: Header | Attributes Tab ?
+
+custom attributes - user can create custom attributes
+
+attributes type: how elastic search will interpret them - string | number (decimal) | vocabulary (string) - id
+
+- complex type attribute - multi-dimensional? - attribute of attributes?
+
+ymm
+---------
+- year
+- make
+- model
+
+
+
+
+-------------------------------------------
+Advertising Integration
+-------------------------------------------
+
+- satisfy google requirements for ad sense advertising for pubishers.
+1.) Ad curation process - verify submitted ads satisfy google content requirements.
+
+AdState
+AdStateMachine
+
+- Create Classifieds.AdStateMachine project
+-- Initial
+-- Submitted
+-- Approved
+-- Rejected
+-- Deleted
+-- Final
+
+events
+------------
+
+CreateAd(--)
+
+SubmitAd -> can goto approve ad or reject ad
+- change state to submitted
+- change ad status to [pending] ?
+-- AdSubmitted
+
+ApproveAd -> can goto deleted
+- change state to approved
+-- UpdateAdStatus
+- change ad status to [active]
++ ad to elastic search index
+
+RejectAd -> can goto deleted and back to pending (provide user with opportunity to modify ad)?
+- change state to rejected
+- change ad status to [inactive]
+-- UpdateAdStatus
+
+DeleteAd - [ApproveAd, RejectAd]
+-- change state to deleted
+-- change ad status to [deleted]
+-- UpdateAdStatus
+
+
+Do I need to create states for expired and "completed" ads - sold, etc? - maybe it would be a good idea.
+
+-- Do I move the indexing process?
+
+-- Only approved ads will be visible on user facing front-end
+
+-- mass transit update ad document object state - status?
+
+
+Admin UI
+
+-----------------
+Pending Ads
+-----------------
+- create new project called classifieds-admin
+- reuse ad master and detail component without search bar
+-- display only pending ads in master view.
+-- Provide buttons to [approve] and [reject] ad in detail view.
+
+-- Need to integrate state with ngrx data somehow I think.
+
+
+AdsApi
+- AdminController?
+
+
+-------------------------------------------
+ES scratch pad
+-------------------------------------------
+
+GET classified_ads/_search
+{
+  "aggs": {
+    "features": {
+      "nested": {
+        "path": "features"
+      },
+      "aggs": {
+        "feature_names": {
+          "terms": {
+            "field": "features.humanName.keyword"
+          }
+        }
+      }
+    }
+  }
+}
+
+GET classified_ads/_search
+{
+  "size": 0,
+  "aggs": {
+    "ads": {
+      "nested": {
+        "path": "features"
+      },
+      "aggs": {
+        "features": {
+          "composite": {
+            "size": 100,
+            "sources": [
+              {
+                "term": { "terms": { "field": "features.humanName.keyword"}  }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+
+GET classified_ads/_search
+{
+	"from": 0,
+	"query": {
+		"bool": {
+			"must": [{
+				"bool": {
+					"must": [{
+						"nested": {
+							"path": "features",
+							"query": {
+								"bool": {
+									"must": [{
+										"match": {
+											"features.humanName": {
+												"query": "Microwave"
+											}
+										}
+									}]
+								}
+							}
+						}
+					}]
+				}
+			}]
+		}
+	},
+	"aggs": {
+    "features": {
+      "nested": {
+        "path": "features"
+      },
+      "aggs": {
+        "feature_names": {
+          "terms": {
+            "field": "features.humanName.keyword"
+          }
+        }
+      }
+    }
+  },
+	"size": 25
+}
+
+
+BINGO -----------------------------------
+
+GET classified_ads/_search
+{
+	"from": 0,
+	"query": {
+		"bool": {
+			"must": [{
+				"bool": {
+					"must": [{
+						"nested": {
+							"path": "features",
+							"query": {
+								"bool": {
+									"must": [{
+										"match": {
+											"features.humanName": {
+												"query": "Microwave"
+											}
+										}
+									}]
+								}
+							}
+						}
+					}]
+				}
+			}]
+		}
+	},
+	"aggs": {
+    "features": {
+      "nested": {
+        "path": "features"
+      },
+      "aggs": {
+        "features_filtered": {
+          "filter": {
+            "match": {
+              "features.humanName": "washer"
+            }
+          },
+          "aggs": {
+            "feature_names": {
+              "terms": {
+                "field": "features.humanName.keyword"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+	"size": 25
+}
+
+----------------------------------
+Attribute matching
+----------------------------------
+- number type fields are FILTERS always
+- strings either | or = keyword | text
+
+for int consider range - search for all homes with between 1 and 3 beds.
+Vehicle should be easy - in theory we just search by keyword i think
+
+Need to map incoming attributes to attribute def.
+I think the ad type object needs to be passed into the repo method to find ads. That way I can easily do so.
+
+AttributesRepository
+- applyAttributes(adtype, query)
+
+- container-widget
+-- renders each child widget below in a container.
+
+use can select multiple years (range or select)?, makes, and models
+
+1 (between) 3
+
+Create catch all / attributes prefix collector
+https://www.strathweb.com/2017/07/customizing-query-string-parameter-binding-in-asp-net-core-mvc/
+https://stackoverflow.com/questions/22707788/is-it-possible-to-get-dictionary-from-query-string/51754375
+
+----------------------------------
+manage ads
+----------------------------------
+
+Submited ads
+Approved ads
+Rejected Ads
+Expired Ads (relist) - 2 week expiration(probably good idea)
+
+- ad views
+- pic views ?
+chat?
+
+
+
+
+
+
+
+https://medium.com/angular-in-depth/ngrx-parameterized-selector-e3f610529f8
+

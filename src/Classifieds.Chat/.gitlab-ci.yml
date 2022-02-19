@@ -1,0 +1,24 @@
+# This file is a template, and might need editing before it works on your project.
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_DRIVER: overlay2
+
+job:
+  stage: build
+  script:
+    - rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+    - yum -y update
+    - yum -y install zip
+    - yum -y install unzip
+    - yum -y install dotnet-sdk-3.1
+    - dotnet tool install Amazon.Lambda.Tools --tool-path /usr/local/bin
+    - dotnet restore ./src/Classifieds.Chat/Classifieds.Chat.csproj
+    - dotnet lambda deploy-function --region us-east-1 --function-name "classifieds-chat" --function-handler "not_required_for_custom_runtime" --function-memory-size 258 --function-timeout 30 --function-runtime provided --project-location src/Classifieds.Chat --function-role classifieds-chat-us-east-1-lambdaRole --msbuild-parameters "--self-contained true --runtime linux-x64 -p:AssemblyName=bootstrap;PublishReadyToRunShowWarning=true" --s3-bucket classifieds-dev-serverlessdeploymentbucket-hqb1affprtcz --s3-prefix serverless/classifieds/dev/
+    - echo "Done"
+  only:
+    - master
+  tags:
+    - docker
+    - aws
+    - classifieds
+    - smeskey

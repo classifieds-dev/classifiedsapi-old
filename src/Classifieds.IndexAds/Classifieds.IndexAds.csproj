@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Elasticsearch.Net" Version="7.4.0" />
+    <PackageReference Include="NEST" Version="7.4.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.10.0-beta1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.0-preview2.19525.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0-preview2.19525.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.0-preview2.19525.4" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.105.26" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+    <Folder Include="Configuration\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Classifieds.Shared\Models\AdIndex.cs;..\Classifieds.Shared\Models\AdFeatureIndex.cs;..\Classifieds.Shared\Models\Ad.cs;..\Classifieds.Shared\Models\CityIndex.cs;..\Classifieds.Shared\Models\AdImage.cs;..\Classifieds.Shared\Models\Vocabulary.cs;..\Classifieds.Shared\Models\Term.cs;..\Classifieds.Shared\Enums\AdTypes.cs;..\Classifieds.Shared\Enums\AttributeTypes.cs;..\Classifieds.Shared\Enums\AdStatuses.cs;..\Classifieds.Shared\Models\AttributeIndex.cs;..\Classifieds.Shared\Models\AttributeValue.cs;..\Classifieds.Shared\Models\AdImageIndex.cs">
+        <Link>_Inlined\Classifieds.Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+</Project>
